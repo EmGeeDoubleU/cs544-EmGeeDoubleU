@@ -144,6 +144,10 @@ QUIC connection. Many clients are handled at once cooperatively without threads;
 all per-connection timers are scheduled with `loop.call_later`, so no client can
 block another.
 
+## What I Learned
+
+Writing the PDU serialization by hand made the protocol way more concrete than the Part 2 spec ever did, since I actually had to lay out the 8-byte header byte by byte and get the length-prefixed fields right. Enforcing the DFA on both the client and the server was harder than I expected, and the illegal-state and stale-ACK cases especially needed real thought to get correct. At some point I realized the feature bitmask from the original spec was overkill for a v1, so I dropped it from LOGIN_REQ and kept the payload to just the username and password. The async timers for the auth, disconnect, and idle timeouts also forced me to reason about the state machine more carefully than my design notes did, because a timeout is really just another event that has to land the connection in a valid state. Overall I came away with a much better feel for how a stateful protocol behaves once timing and partial messages enter the picture.
+
 ## Deliberate spec deviation
 
 The `LOGIN_REQ` payload intentionally **omits the 4-byte feature bitmask** that
